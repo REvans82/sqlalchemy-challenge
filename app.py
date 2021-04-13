@@ -9,11 +9,11 @@ from sqlalchemy import create_engine, func
 from flask import Flask, jsonify
 
 # Path to sqlite
-hawaii_database_path = "sqlit:///../Resources/hawaii.sqlite"
+hawaii_database_path = "Resources/hawaii.sqlite"
 
-# create engine to hawaii.sqlite
+# # create engine to hawaii.sqlite
 engine = create_engine(f"sqlite:///{hawaii_database_path}")
-conn = engine.connect()
+# conn = engine.connect()
 
 # View all of the classes that automap found
 Base = automap_base()
@@ -24,14 +24,14 @@ Measurement = Base.classes.measurement
 Station = Base.classes.station
 
 # Create our session (link) from Python to the DB
-session = Session(bind=engine)
+session = Session(engine)
 
 # Set up Flask
 app = Flask(__name__)
 @app.route("/")
 def climate():
     return (
-        f"The available routes are:</br>"
+        f"The available routes ARE:</br>"
         f"/api/v1.0/precipitation</br>"
         f"/api/v1.0/stations</br>"
         f"/api/v1.0/tobs</br>"
@@ -51,6 +51,7 @@ def prcp():
                     filter(Measurement.date >= last_year).all()
     #for date, prcp in precp_score:
     precp_dict = {date: prcp for date, prcp in precp_score}
+    session.close()
     return jsonify(precp_dict)
 
 @app.route("/api/v1.0/stations")
@@ -58,6 +59,7 @@ def stations():
     # Design a query to calculate the total number stations in the dataset
     total_stations = session.query(Station.station).all()
     station_list = list(np.ravel(total_stations))
+    session.close()
     return jsonify(station_list)
 
 @app.route("/api/v1.0/tobs")
@@ -72,6 +74,7 @@ def temperature():
         filter(Measurement.station == 'USC00519281').\
         filter(Measurement.date >= last_year).all()
     temp_list = list(np.ravel(results))
+    session.close()
     return jsonify(temp_list)
 
 app.route("/api/v1.0/<start>")
@@ -80,14 +83,15 @@ def most_active(start=None,end=None):
     # Using the most active station id from the previous query, calculate the lowest, \
     # highest, and average temperature.
     if not end:
-        total_temp = session.query(func.min(Measurement.tobs),func.max(Measurement.tobs),func.avg(Measurement.tobs)).\
-                filter(Measurement.station == 'USC00519281').filter(Measurement.date >= start).all()
+        total_temp = session.query(func.min(Measurement.tobs),func.avg(Measurement.tobs),func.max(Measurement.tobs)).\
+                filter(Measurement.date >= start).all()
         range_list = list(np.ravel(total_temp))
-    total_temp = session.query(func.min(Measurement.tobs),func.max(Measurement.tobs),func.avg(Measurement.tobs)).\
-                filter(Measurement.station == 'USC00519281').filter(Measurement.date >= start).\
+        return jsonify(range_list)
+    total_temp1 = session.query(func.min(Measurement.tobs),func.max(Measurement.tobs),func.avg(Measurement.tobs)).\
+                filter(Measurement.date >= start).\
                 filter(Measurement.date <= end).all()
-    range_list = list(np.ravel(total_temp))
-    return jsonify(range_list)
+    range_list1 = list(np.ravel(total_temp1))
+    return jsonify(range_list1)
 
 if __name__ == '__main__':
     app.run()
