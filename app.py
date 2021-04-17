@@ -77,8 +77,8 @@ def temperature():
     session.close()
     return jsonify(temp_list)
 
-app.route("/api/v1.0/<start>")
-app.route("/api/v1.0/<start>/<end>")
+@app.route("/api/v1.0/<start>")
+@app.route("/api/v1.0/<start>/<end>")
 def most_active(start=None,end=None):
     # Using the most active station id from the previous query, calculate the lowest, \
     # highest, and average temperature.
